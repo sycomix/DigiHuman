@@ -24,9 +24,8 @@ class Pix2pixDataset(BaseDataset):
         self.dataset_size = len(self.label_paths)
 
     def get_paths(self, opt):
-        label_paths = []
         assert False, "A subclass of Pix2pixDataset must override self.get_paths(self, opt)"
-        return label_paths
+        return []
 
     def __getitem__(self, index):
         # Label Image

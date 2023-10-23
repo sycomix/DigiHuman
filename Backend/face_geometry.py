@@ -22,10 +22,10 @@ import numpy as np
 class Singleton(type):
     _instances = {}
 
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
+    def __call__(self, *args, **kwargs):
+        if self not in self._instances:
+            self._instances[self] = super(Singleton, self).__call__(*args, **kwargs)
+        return self._instances[self]
 
 
 class Debugger(metaclass=Singleton):
@@ -2566,10 +2566,9 @@ def extract_square_root(point_weights):
 
 def solve_weighted_orthogonal_problem(source_points, target_points, point_weights):
     sqrt_weights = extract_square_root(point_weights)
-    transform_mat = internal_solve_weighted_orthogonal_problem(
+    return internal_solve_weighted_orthogonal_problem(
         source_points, target_points, sqrt_weights
     )
-    return transform_mat
 
 
 def internal_solve_weighted_orthogonal_problem(sources, targets, sqrt_weights):

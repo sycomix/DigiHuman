@@ -28,10 +28,11 @@ class MultiscaleDiscriminator(BaseNetwork):
         opt, _ = parser.parse_known_args()
 
         # define properties of each discriminator of the multiscale discriminator
-        subnetD = util.find_class_in_module(opt.netD_subarch + 'discriminator',
-                                            'models.networks.discriminator')
+        subnetD = util.find_class_in_module(
+            f'{opt.netD_subarch}discriminator', 'models.networks.discriminator'
+        )
         subnetD.modify_commandline_options(parser, is_train)
-        
+
         return parser
 
     def __init__(self, opt):
@@ -47,7 +48,7 @@ class MultiscaleDiscriminator(BaseNetwork):
         if subarch == 'n_layer':
             netD = NLayerDiscriminator(opt)
         else:
-            raise ValueError('unrecognized discriminator subarchitecture %s' % subarch)
+            raise ValueError(f'unrecognized discriminator subarchitecture {subarch}')
         return netD
 
     def downsample(self, input):
@@ -86,12 +87,12 @@ class NLayerDiscriminator(BaseNetwork):
         padw = int(np.ceil((kw-1.0)/2))
         nf = opt.ndf
         input_nc = self.compute_D_input_nc(opt)
-        
+
         norm_layer = get_nonspade_norm_layer(opt, opt.norm_D)
         sequence = [[nn.Conv2d(input_nc, nf, kernel_size=kw, stride=2, padding=padw),
                      nn.LeakyReLU(0.2, False)]]
 
-        for n in range(1, opt.n_layers_D):
+        for _ in range(1, opt.n_layers_D):
             nf_prev = nf
             nf = min(nf * 2, 512)
             sequence += [[norm_layer(nn.Conv2d(nf_prev, nf, kernel_size=kw,
@@ -103,7 +104,7 @@ class NLayerDiscriminator(BaseNetwork):
 
         ## We divide the layers into groups to extract intermediate layer outputs
         for n in range(len(sequence)):
-            self.add_module('model'+str(n), nn.Sequential(*sequence[n]))
+            self.add_module(f'model{str(n)}', nn.Sequential(*sequence[n]))
         
     def compute_D_input_nc(self, opt):
         input_nc = opt.label_nc + opt.output_nc
@@ -120,10 +121,7 @@ class NLayerDiscriminator(BaseNetwork):
             results.append(intermediate_output)
 
         get_intermediate_features = not self.opt.no_ganFeat_loss
-        if get_intermediate_features:
-            return results[1:]
-        else:
-            return results[-1]
+        return results[1:] if get_intermediate_features else results[-1]
     
 
 

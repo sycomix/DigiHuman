@@ -33,7 +33,5 @@ class CocoDataset(Pix2pixDataset):
         # server...
         root = opt.dataroot
         phase = 'val'
-        label_dir = os.path.join(root, '%s_label' % phase)
-        label_paths = make_dataset(label_dir, recursive=False, read_cache=True)
-
-        return label_paths
+        label_dir = os.path.join(root, f'{phase}_label')
+        return make_dataset(label_dir, recursive=False, read_cache=True)

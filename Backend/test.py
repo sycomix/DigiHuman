@@ -20,7 +20,7 @@ def run(verbose=False):
     opt = TestOptions().parse(verbose)
 
     dataset_name = "coco"
-    dataset_filename = "data." + dataset_name + "_dataset"
+    dataset_filename = f"data.{dataset_name}_dataset"
 
     datasetlib = importlib.import_module(dataset_filename)
 
@@ -65,7 +65,7 @@ def run(verbose=False):
 
         # this is just a dictionary that contains tensors and stuff?
         generated = model(data_i, mode='inference', verbose=verbose)
-        
+
         for b in range(generated.shape[0]):
             # Should only be one?
             image_dir = os.path.join(

@@ -47,12 +47,12 @@ LABEL_FOLDER = os.path.join(os.path.dirname(__file__), "dataset/val_label")
 verbose = True
 
 def copy_file(old, new):
-    command_string = "cp " + old + " " + new
+    command_string = f"cp {old} {new}"
     subprocess.check_output(command_string.split(" "))
 
 def make_processable(greyscale_fname, output_color_file):
     # Inst folder
-    ouptut_greyscale_file = INST_FOLDER + "/" + greyscale_fname
+    ouptut_greyscale_file = f"{INST_FOLDER}/{greyscale_fname}"
     # Converts the file to greyscale and saves it to the inst folder?
     if verbose:
         print(output_color_file, ouptut_greyscale_file)
@@ -61,11 +61,11 @@ def make_processable(greyscale_fname, output_color_file):
         ouptut_greyscale_file
     )
 
-    ouptut_greyscale_file_labels = LABEL_FOLDER + "/" + greyscale_fname
+    ouptut_greyscale_file_labels = f"{LABEL_FOLDER}/{greyscale_fname}"
 
     copy_file(ouptut_greyscale_file, ouptut_greyscale_file_labels)
 
-    ouptut_greyscale_file_img = IMG_FOLDER + "/" + greyscale_fname
+    ouptut_greyscale_file_img = f"{IMG_FOLDER}/{greyscale_fname}"
     copy_file(ouptut_greyscale_file, ouptut_greyscale_file_img)
 
 def parse_static_filepath(filepath):
@@ -113,9 +113,9 @@ def process_queue():
             # thread.start()
             # thread.join()
             # print("process {} finished".format(file_name))
-            print("process {} started".format(file_name))
+            print(f"process {file_name} started")
             calculate_video_pose_estimation(file_name)
-            print("process {} finished".format(file_name))
+            print(f"process {file_name} finished")
 
 
 
@@ -292,94 +292,96 @@ def get_frame_pose():
 @app.route('/uploader', methods=['GET', 'POST'])
 def upload_file():
 
-    if request.method == 'POST':
-        f = request.files['file']
-        postfix = f.filename.split(".")[-1]
-        file_name = TEMP_FILE_FOLDER + str(uuid.uuid4()) + "." + postfix
-        f.save(file_name)
+    if request.method != 'POST':
+        return
+    f = request.files['file']
+    postfix = f.filename.split(".")[-1]
+    file_name = TEMP_FILE_FOLDER + str(uuid.uuid4()) + "." + postfix
+    f.save(file_name)
 
-        # checking file type
-        mimestart = mimetypes.guess_type(file_name)[0]
-        if mimestart != None:
-            mimestart = mimestart.split('/')[0]
-            if mimestart in ['video']:
-                # global process_reqs
-                # process_reqs.append(file_name)
-                print(":(")
-                global pose_video_data
-                global pose_video_data_statues
-                pose_video_data[file_name] = []
-                pose_video_data_statues[file_name] = False
-                thread2 = Thread(target=calculate_video_pose_estimation,args=(file_name,))
-                thread2.start()
-                print("video type")
-                cap = cv2.VideoCapture(file_name)
-                tframe = cap.get(cv2.CAP_PROP_FRAME_COUNT)  # get total frame count
-                width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float `width`
-                height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float `height`
-                aspectRatio = width / height
-                cap.release()
+    # checking file type
+    mimestart = mimetypes.guess_type(file_name)[0]
+    if mimestart != None:
+        mimestart = mimestart.split('/')[0]
+        if mimestart in ['video']:
+            # global process_reqs
+            # process_reqs.append(file_name)
+            print(":(")
+            global pose_video_data
+            global pose_video_data_statues
+            pose_video_data[file_name] = []
+            pose_video_data_statues[file_name] = False
+            thread2 = Thread(target=calculate_video_pose_estimation,args=(file_name,))
+            thread2.start()
+            print("video type")
+            cap = cv2.VideoCapture(file_name)
+            tframe = cap.get(cv2.CAP_PROP_FRAME_COUNT)  # get total frame count
+            width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float `width`
+            height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float `height`
+            aspectRatio = width / height
+            cap.release()
 
-                res = {
-                    'file' : file_name,
-                    'totalFrames': int(tframe),
-                    'aspectRatio': aspectRatio
-                }
-                return jsonify(res)
+            res = {
+                'file' : file_name,
+                'totalFrames': int(tframe),
+                'aspectRatio': aspectRatio
+            }
+            return jsonify(res)
 
-            elif mimestart in ['image']:
-                print("image type")
-                GuGanImage = GauGanRunner(file_name)
-                return send_file(GuGanImage, mimetype='image/png')
-            else:
-                print("Wrong input!")
-                return "Oops!"
-        # print(file_name)
-        # img = cv2.imread(file_name)
-        # if img is None:
-        #     print("Could not read the image.")
-        # else:
-        #     print("wtf then:/")
-        #     cv2.imshow("Display window", img)
-        #     cv2.waitKey(0)
-        return 'file uploaded successfully'
+        elif mimestart in ['image']:
+            print("image type")
+            GuGanImage = GauGanRunner(file_name)
+            return send_file(GuGanImage, mimetype='image/png')
+        else:
+            print("Wrong input!")
+            return "Oops!"
+    # print(file_name)
+    # img = cv2.imread(file_name)
+    # if img is None:
+    #     print("Could not read the image.")
+    # else:
+    #     print("wtf then:/")
+    #     cv2.imshow("Display window", img)
+    #     cv2.waitKey(0)
+    return 'file uploaded successfully'
 
 
 # processing received file
 @app.route('/handUploader', methods=['GET', 'POST'])
 def upload_hand_video():
-    if request.method == 'POST':
-        f = request.files['file']
-        postfix = f.filename.split(".")[-1]
-        file_name = TEMP_FILE_FOLDER + str(uuid.uuid4()) + "." + postfix
-        f.save(file_name)
-        # checking file type
-        mimestart = mimetypes.guess_type(file_name)[0]
-        if mimestart != None:
-            mimestart = mimestart.split('/')[0]
-            if mimestart in ['video']:
-                global hand_pose_video_data
-                global hand_pose_video_data_statues
-                hand_pose_video_data[file_name] = []
-                hand_pose_video_data_statues[file_name] = False
-                thread2 = Thread(target=calculate_video_hand_pose_estimation,args=(file_name,))
-                thread2.start()
-                cap = cv2.VideoCapture(file_name)
-                tframe = cap.get(cv2.CAP_PROP_FRAME_COUNT)  # get total frame count
-                width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float `width`
-                height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float `height`
-                aspectRatio = width / height
-                cap.release()
-                res = {
-                    'file' : file_name,
-                    'totalFrames': int(tframe),
-                    'aspectRatio': aspectRatio
-                }
-                return jsonify(res)
-            else:
-                print("Wrong input!")
-                return "Oops!"
-        return 'file uploaded successfully'
+    if request.method != 'POST':
+        return
+    f = request.files['file']
+    postfix = f.filename.split(".")[-1]
+    file_name = TEMP_FILE_FOLDER + str(uuid.uuid4()) + "." + postfix
+    f.save(file_name)
+    # checking file type
+    mimestart = mimetypes.guess_type(file_name)[0]
+    if mimestart != None:
+        mimestart = mimestart.split('/')[0]
+        if mimestart in ['video']:
+            global hand_pose_video_data
+            global hand_pose_video_data_statues
+            hand_pose_video_data[file_name] = []
+            hand_pose_video_data_statues[file_name] = False
+            thread2 = Thread(target=calculate_video_hand_pose_estimation,args=(file_name,))
+            thread2.start()
+            cap = cv2.VideoCapture(file_name)
+            tframe = cap.get(cv2.CAP_PROP_FRAME_COUNT)  # get total frame count
+            width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float `width`
+            height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float `height`
+            aspectRatio = width / height
+            cap.release()
+            res = {
+                'file' : file_name,
+                'totalFrames': int(tframe),
+                'aspectRatio': aspectRatio
+            }
+            return jsonify(res)
+        else:
+            print("Wrong input!")
+            return "Oops!"
+    return 'file uploaded successfully'
 
 
 
@@ -387,85 +389,87 @@ def upload_hand_video():
 @app.route('/holisticUploader', methods=['GET', 'POST'])
 def upload_holistic_video():
 
-    if request.method == 'POST':
-        f = request.files['file']
-        postfix = f.filename.split(".")[-1]
-        file_name = TEMP_FILE_FOLDER + str(uuid.uuid4()) + "." + postfix
-        f.save(file_name)
+    if request.method != 'POST':
+        return
+    f = request.files['file']
+    postfix = f.filename.split(".")[-1]
+    file_name = TEMP_FILE_FOLDER + str(uuid.uuid4()) + "." + postfix
+    f.save(file_name)
 
-        # checking file type
-        mimestart = mimetypes.guess_type(file_name)[0]
-        if mimestart != None:
-            mimestart = mimestart.split('/')[0]
-            if mimestart in ['video']:
-                global hand_pose_video_data
-                global hand_pose_video_data_statues
-                full_pose_video_data[file_name] = []
-                full_pose_video_data_statues[file_name] = False
-                thread2 = Thread(target=calculate_video_full_pose_estimation,args=(file_name,))
-                thread2.start()
-                print("video type")
-                cap = cv2.VideoCapture(file_name)
-                tframe = cap.get(cv2.CAP_PROP_FRAME_COUNT)  # get total frame count
-                width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float `width`
-                height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float `height`
-                aspectRatio = width / height
-                cap.release()
+    # checking file type
+    mimestart = mimetypes.guess_type(file_name)[0]
+    if mimestart != None:
+        mimestart = mimestart.split('/')[0]
+        if mimestart in ['video']:
+            global hand_pose_video_data
+            global hand_pose_video_data_statues
+            full_pose_video_data[file_name] = []
+            full_pose_video_data_statues[file_name] = False
+            thread2 = Thread(target=calculate_video_full_pose_estimation,args=(file_name,))
+            thread2.start()
+            print("video type")
+            cap = cv2.VideoCapture(file_name)
+            tframe = cap.get(cv2.CAP_PROP_FRAME_COUNT)  # get total frame count
+            width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float `width`
+            height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float `height`
+            aspectRatio = width / height
+            cap.release()
 
-                res = {
-                    'file' : file_name,
-                    'totalFrames': int(tframe),
-                    'aspectRatio': aspectRatio
-                }
-                return jsonify(res)
-            else:
-                print("Wrong input!")
-                return "Oops!"
-        return 'file uploaded successfully'
+            res = {
+                'file' : file_name,
+                'totalFrames': int(tframe),
+                'aspectRatio': aspectRatio
+            }
+            return jsonify(res)
+        else:
+            print("Wrong input!")
+            return "Oops!"
+    return 'file uploaded successfully'
 
 
 
 @app.route('/faceUploader', methods=['GET', 'POST'])
 def upload_face_video():
 
-    if request.method == 'POST':
-        f = request.files['file']
-        postfix = f.filename.split(".")[-1]
-        file_name = TEMP_FILE_FOLDER + str(uuid.uuid4()) + "." + postfix
-        f.save(file_name)
+    if request.method != 'POST':
+        return
+    f = request.files['file']
+    postfix = f.filename.split(".")[-1]
+    file_name = TEMP_FILE_FOLDER + str(uuid.uuid4()) + "." + postfix
+    f.save(file_name)
 
-        # checking file type
-        mimestart = mimetypes.guess_type(file_name)[0]
-        if mimestart != None:
-            mimestart = mimestart.split('/')[0]
-            if mimestart in ['video']:
-                # global process_reqs
-                # process_reqs.append(file_name)
-                global face_pose_video_data
-                global face_pose_video_data_statues
-                face_pose_video_data[file_name] = []
-                face_pose_video_data_statues[file_name] = False
-                thread = Thread(target=calculate_video_mocap_estimation,args=(file_name,))
-                thread.start()
-                print("video type")
-                cap = cv2.VideoCapture(file_name)
-                tframe = cap.get(cv2.CAP_PROP_FRAME_COUNT)  # get total frame count
-                width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float `width`
-                height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float `height`
-                aspectRatio = width / height
-                cap.release()
+    # checking file type
+    mimestart = mimetypes.guess_type(file_name)[0]
+    if mimestart != None:
+        mimestart = mimestart.split('/')[0]
+        if mimestart in ['video']:
+            # global process_reqs
+            # process_reqs.append(file_name)
+            global face_pose_video_data
+            global face_pose_video_data_statues
+            face_pose_video_data[file_name] = []
+            face_pose_video_data_statues[file_name] = False
+            thread = Thread(target=calculate_video_mocap_estimation,args=(file_name,))
+            thread.start()
+            print("video type")
+            cap = cv2.VideoCapture(file_name)
+            tframe = cap.get(cv2.CAP_PROP_FRAME_COUNT)  # get total frame count
+            width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float `width`
+            height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float `height`
+            aspectRatio = width / height
+            cap.release()
 
-                res = {
-                    'file' : file_name,
-                    'totalFrames': int(tframe),
-                    'aspectRatio': aspectRatio
-                }
-                return jsonify(res)
+            res = {
+                'file' : file_name,
+                'totalFrames': int(tframe),
+                'aspectRatio': aspectRatio
+            }
+            return jsonify(res)
 
-            else:
-                print("Wrong input!")
-                return "Oops!"
-        return 'file uploaded successfully'
+        else:
+            print("Wrong input!")
+            return "Oops!"
+    return 'file uploaded successfully'
 
 
 

@@ -84,8 +84,9 @@ class FaceData:
         self._filter_size = filter_size
         self._blend_shapes = [0.000] * 66
         self._old_blend_shapes = []  # used for filtering
-        for i in range(66):
-            self._old_blend_shapes.append(deque([0.0], maxlen=self._filter_size))
+        self._old_blend_shapes.extend(
+            deque([0.0], maxlen=self._filter_size) for _ in range(66)
+        )
 
 
 

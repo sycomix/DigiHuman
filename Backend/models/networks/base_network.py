@@ -18,9 +18,7 @@ class BaseNetwork(nn.Module):
     def print_network(self):
         if isinstance(self, list):
             self = self[0]
-        num_params = 0
-        for param in self.parameters():
-            num_params += param.numel()
+        num_params = sum(param.numel() for param in self.parameters())
         print('Network [%s] was created. Total number of parameters: %.1f million. '
               'To see the architecture, do print(network).'
               % (type(self).__name__, num_params / 1000000))
@@ -47,7 +45,9 @@ class BaseNetwork(nn.Module):
                 elif init_type == 'none': # uses pytorch's default init method
                     m.reset_parameters()
                 else:
-                    raise NotImplementedError('initialization method [%s] is not implemented' % init_type)
+                    raise NotImplementedError(
+                        f'initialization method [{init_type}] is not implemented'
+                    )
                 if hasattr(m, 'bias') and m.bias is not None:
                     init.constant_(m.bias.data, 0.0)
 

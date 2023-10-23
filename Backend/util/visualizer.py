@@ -32,7 +32,7 @@ class Visualizer():
         if self.use_html:
             self.web_dir = os.path.join(opt.checkpoints_dir, opt.name, 'web')
             self.img_dir = os.path.join(self.web_dir, 'images')
-            print('create web directory %s...' % self.web_dir)
+            print(f'create web directory {self.web_dir}...')
             util.mkdirs([self.web_dir, self.img_dir])
         if opt.isTrain:
             self.log_name = os.path.join(
@@ -85,8 +85,7 @@ class Visualizer():
                     util.save_image(image_numpy, img_path)
 
             # update website
-            webpage = html.HTML(
-                self.web_dir, 'Experiment name = %s' % self.name, refresh=5)
+            webpage = html.HTML(self.web_dir, f'Experiment name = {self.name}', refresh=5)
             for n in range(epoch, 0, -1):
                 webpage.add_header('epoch [%d]' % n)
                 ims = []
@@ -142,7 +141,7 @@ class Visualizer():
     def convert_visuals_to_numpy(self, visuals):
         for key, t in visuals.items():
             tile = self.opt.batchSize > 8
-            if 'input_label' == key:
+            if key == 'input_label':
                 t = util.tensor2label(t, self.opt.label_nc + 2, tile=tile)
             else:
                 t = util.tensor2im(t, tile=tile)
@@ -160,7 +159,7 @@ class Visualizer():
         if verbose:
             print(image_dir, "IMAGEDIR")
 
-        image_name = '%s.png' % (uuid.uuid4())
+        image_name = f'{uuid.uuid4()}.png'
         save_path = os.path.join(image_dir, image_name)
         util.save_image(image_numpy, save_path, create_dir=True)
         if verbose:

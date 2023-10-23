@@ -69,13 +69,13 @@ class BlendshapeCalculator():
             x = landmarks[index][0]
             y = landmarks[index][1]
             z = landmarks[index][2]
-            return np.array([x, y, z])
         else:
             # is a normalized landmark
             x = landmarks[index].x  # * self.image_width
             y = landmarks[index].y  # * self.image_height
             z = landmarks[index].z  # * self.image_height
-            return np.array([x, y, z])
+
+        return np.array([x, y, z])
 
             #  clamp value to 0 - 1 using the min and max values of the config
 
@@ -427,8 +427,7 @@ class BlendshapeCalculator():
         eye_inner_lid = self.dist(self._get_landmark(
             eye_points[4]), self._get_landmark(eye_points[7]))
         eye_lid_avg = (eye_outer_lid + eye_mid_lid + eye_inner_lid) / 3
-        ratio = eye_lid_avg / eye_width
-        return ratio
+        return eye_lid_avg / eye_width
 
     def _calculate_eye_landmarks(self):
         # Using EAR(Eye Aspect Ratio) for detecting blinks

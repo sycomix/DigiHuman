@@ -28,10 +28,10 @@ class FacadesDataset(Pix2pixDataset):
         root = opt.dataroot
         phase = 'val' if opt.phase == 'test' else opt.phase
 
-        label_dir = os.path.join(root, '%s_label' % phase)
+        label_dir = os.path.join(root, f'{phase}_label')
         label_paths = make_dataset(label_dir, recursive=False, read_cache=True)
 
-        image_dir = os.path.join(root, '%s_img' % phase)
+        image_dir = os.path.join(root, f'{phase}_img')
         image_paths = make_dataset(image_dir, recursive=False, read_cache=True)
 
         instance_paths = []

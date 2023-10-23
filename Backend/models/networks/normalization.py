@@ -35,7 +35,7 @@ def get_nonspade_norm_layer(opt, norm_type='instance'):
         if getattr(layer, 'bias', None) is not None:
             delattr(layer, 'bias')
             layer.register_parameter('bias', None)        
-            
+
         if subnorm_type == 'batch':
             norm_layer = nn.BatchNorm2d(get_out_channel(layer), affine=True)
         elif subnorm_type == 'sync_batch':
@@ -43,7 +43,7 @@ def get_nonspade_norm_layer(opt, norm_type='instance'):
         elif subnorm_type == 'instance':
             norm_layer = nn.InstanceNorm2d(get_out_channel(layer), affine=False)
         else:
-            raise ValueError('normalization layer %s is not recognized' % subnorm_type)
+            raise ValueError(f'normalization layer {subnorm_type} is not recognized')
 
         return nn.Sequential(layer, norm_layer)
 
@@ -72,15 +72,16 @@ class SPADE(nn.Module):
         param_free_norm_type = str(parsed.group(1))
         ks = int(parsed.group(2))
 
-        if param_free_norm_type == 'instance':            
+        if param_free_norm_type == 'batch':
+            self.param_free_norm = BatchNorm2d(norm_nc, affine=False)
+        elif param_free_norm_type == 'instance':
             self.param_free_norm = nn.InstanceNorm2d(norm_nc, affine=False)
         elif param_free_norm_type == 'syncbatch':
             self.param_free_norm = SynchronizedBatchNorm2d(norm_nc, affine=False)
-        elif param_free_norm_type == 'batch':
-            self.param_free_norm = BatchNorm2d(norm_nc, affine=False)
         else:
-            raise ValueError('%s is not a recognized param-free norm type in SPADE'
-                             % param_free_norm_type)
+            raise ValueError(
+                f'{param_free_norm_type} is not a recognized param-free norm type in SPADE'
+            )
 
         # The dimension of the intermediate embedding space. Yes, hardcoded.
         nhidden = 128 
@@ -105,8 +106,5 @@ class SPADE(nn.Module):
         gamma = self.mlp_gamma(actv)
         beta = self.mlp_beta(actv)
 
-        # apply scale and bias
-        out = normalized * (1 + gamma) + beta
-
-        return out
+        return normalized * (1 + gamma) + beta
 

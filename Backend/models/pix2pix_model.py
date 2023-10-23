@@ -39,9 +39,9 @@ class Pix2PixModel(torch.nn.Module):
             return self.generate_fake(input_semantics)
 
     def initialize_networks(self, opt, verbose=True):
-        # IDK
-        netG = util.load_network(networks.define_G(opt,verbose), 'G', opt.which_epoch, opt)
-        return netG
+        return util.load_network(
+            networks.define_G(opt, verbose), 'G', opt.which_epoch, opt
+        )
 
     # preprocess the input, such as moving the tensors to GPUs and
     # transforming the label map to one-hot encoding
@@ -64,8 +64,7 @@ class Pix2PixModel(torch.nn.Module):
         bs, _, h, w = label_map.size()
         num_classes = 184
         input_label = self.FloatTensor(bs, num_classes, h, w).zero_()
-        input_semantics = input_label.scatter_(1, label_map, 1.0)
-        return input_semantics
+        return input_label.scatter_(1, label_map, 1.0)
 
     def generate_fake(self, input_semantics):
         """Generates the fake image from the input semantics"""

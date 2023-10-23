@@ -4,10 +4,7 @@ Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses
 """
 
 def id2label(id):
-    if id == 182:
-        id = 0
-    else:
-        id = id + 1
+    id = 0 if id == 182 else id + 1
     labelmap = \
         {0: 'unlabeled', 
          1: 'person',
@@ -192,7 +189,4 @@ def id2label(id):
          180: 'window-blind',
          181: 'window-other',
          182: 'wood'}
-    if id in labelmap:
-        return labelmap[id]
-    else:
-        return 'unknown'
+    return labelmap.get(id, 'unknown')

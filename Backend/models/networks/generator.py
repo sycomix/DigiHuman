@@ -65,17 +65,18 @@ class SPADEGenerator(BaseNetwork):
         elif opt.num_upsampling_layers == 'most':
             num_up_layers = 7
         else:
-            raise ValueError('opt.num_upsampling_layers [%s] not recognized' %
-                             opt.num_upsampling_layers)
+            raise ValueError(
+                f'opt.num_upsampling_layers [{opt.num_upsampling_layers}] not recognized'
+            )
 
         sw = opt.crop_size // (2**num_up_layers)
         sh = round(sw / opt.aspect_ratio)
-            
+
         return sw, sh    
 
     def forward(self, input, z=None):
         seg = input
-        
+
         if self.opt.use_vae:
             # we sample z from unit normal and reshape the tensor
             if z is None:
@@ -93,10 +94,9 @@ class SPADEGenerator(BaseNetwork):
         x = self.up(x)
         x = self.G_middle_0(x, seg)
 
-        if self.opt.num_upsampling_layers == 'more' or \
-           self.opt.num_upsampling_layers == 'most':
+        if self.opt.num_upsampling_layers in ['more', 'most']:
             x = self.up(x)
-            
+
         x = self.G_middle_1(x, seg)
 
         x = self.up(x)
@@ -147,10 +147,10 @@ class Pix2PixHDGenerator(BaseNetwork):
                                        kernel_size=opt.resnet_initial_kernel_size,
                                        padding=0)),
                   activation]
-        
+
         ### downsample
         mult = 1
-        for i in range(opt.resnet_n_downsample):
+        for _ in range(opt.resnet_n_downsample):
             model += [norm_layer(nn.Conv2d(opt.ngf * mult, opt.ngf * mult * 2,
                                            kernel_size=3, stride=2, padding=1)),
                       activation]
@@ -158,15 +158,15 @@ class Pix2PixHDGenerator(BaseNetwork):
 
 
         ### resnet blocks
-        for i in range(opt.resnet_n_blocks):
+        for _ in range(opt.resnet_n_blocks):
             model += [ResnetBlock(opt.ngf * mult,
                                   norm_layer=norm_layer,
                                   activation=activation,
                                   kernel_size=opt.resnet_kernel_size)]
-            
-        
-        ### upsample         
-        for i in range(opt.resnet_n_downsample):
+
+
+        ### upsample
+        for _ in range(opt.resnet_n_downsample):
             nc_in = int(opt.ngf * mult)
             nc_out = int((opt.ngf * mult) / 2)
             model += [norm_layer(nn.ConvTranspose2d(nc_in, nc_out,

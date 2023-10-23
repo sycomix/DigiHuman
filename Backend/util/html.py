@@ -57,9 +57,8 @@ class HTML:
     def save(self):
         #html_file = '%s/%s' % (self.web_dir, self.html_name)
         html_file = os.path.join(self.web_dir, self.html_name)
-        f = open(html_file, 'wt')
-        f.write(self.doc.render())
-        f.close()
+        with open(html_file, 'wt') as f:
+            f.write(self.doc.render())
 
 
 if __name__ == '__main__':

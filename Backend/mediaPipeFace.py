@@ -85,10 +85,10 @@ def Calculate_Face_Mocap(path=None,debug=False):
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, image_width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, image_height)
     with mp_face_mesh.FaceMesh(
-            max_num_faces=1,
-            refine_landmarks=True,
-            min_detection_confidence=0.2,
-            min_tracking_confidence=0.9) as face_mesh:
+                max_num_faces=1,
+                refine_landmarks=True,
+                min_detection_confidence=0.2,
+                min_tracking_confidence=0.9) as face_mesh:
         while cap.isOpened():
             success, image = cap.read()
 
@@ -121,11 +121,14 @@ def Calculate_Face_Mocap(path=None,debug=False):
                         landmarks.copy(), pcf
                     )
                     # calculate and set all the blendshapes
-                    blendshape_calulator.calculate_blendshapes(face_data,metric_landmarks[0:3].T,face_landmarks.landmark)
+                    blendshape_calulator.calculate_blendshapes(
+                        face_data,
+                        metric_landmarks[:3].T,
+                        face_landmarks.landmark,
+                    )
                     # blends = live_link_face.get_all_blendshapes()
 
-                    blends = []
-                    blends.append(face_data.get_blendshape(FaceBlendShape.EyeBlinkLeft))
+                    blends = [face_data.get_blendshape(FaceBlendShape.EyeBlinkLeft)]
                     blends.append(face_data.get_blendshape(FaceBlendShape.EyeBlinkRight))
                     blends.append(face_data.get_blendshape(FaceBlendShape.EyeSquintLeft))
                     blends.append(face_data.get_blendshape(FaceBlendShape.EyeSquintRight))
@@ -186,14 +189,11 @@ def Calculate_Face_Mocap(path=None,debug=False):
 
                     frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
                     currentTime = cap.get(cv2.CAP_PROP_POS_MSEC)
-                    json_data = {
-                        "blendShapes" : blends,
-                        "frame" : frame,
-                        "time" : currentTime
+                    yield {
+                        "blendShapes": blends,
+                        "frame": frame,
+                        "time": currentTime,
                     }
-
-                    yield json_data
-
             if debug:
                 image = Show_Frame_Landmarks(image,results)
                 result.write(image)
@@ -250,108 +250,106 @@ def face_holistic(video_path,debug=False):
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, image_width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, image_height)
     with mp_holistic.Holistic(
-        min_detection_confidence=0.5,
-        min_tracking_confidence=0.8,
-        model_complexity=2) as holistic:
-      while cap.isOpened():
-        success, image = cap.read()
-        # current_frame
-        frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
-        if not success:
-          break
-
-        # To improve performance, optionally mark the image as not writeable to
-        # pass by reference.
-        image.flags.writeable = True
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        results = holistic.process(image)
-
-        if results.face_landmarks:
-            face_landmarks = results.face_landmarks
-            landmarks = np.array(
-                [(lm.x, lm.y, lm.z) for lm in face_landmarks.landmark[:468]]
-
-            )
-            landmarks = landmarks.T
-
-            metric_landmarks, pose_transform_mat = get_metric_landmarks(
-                landmarks.copy(), pcf
-            )
-            # calculate and set all the blendshapes
-            blendshape_calulator.calculate_blendshapes(face_data, metric_landmarks[0:3].T, face_landmarks.landmark)
-            # blends = live_link_face.get_all_blendshapes()
-
-            blends = []
-            blends.append(face_data.get_blendshape(FaceBlendShape.EyeBlinkLeft))
-            blends.append(face_data.get_blendshape(FaceBlendShape.EyeBlinkRight))
-            blends.append(face_data.get_blendshape(FaceBlendShape.MouthSmileRight))
-            blends.append(face_data.get_blendshape(FaceBlendShape.MouthSmileLeft))
-            blends.append(face_data.get_blendshape(FaceBlendShape.MouthFrownRight))
-            blends.append(face_data.get_blendshape(FaceBlendShape.MouthFrownLeft))
-            blends.append(face_data.get_blendshape(FaceBlendShape.MouthLeft))
-            blends.append(face_data.get_blendshape(FaceBlendShape.MouthRight))
-            blends.append(face_data.get_blendshape(FaceBlendShape.MouthLowerDownRight))
-            blends.append(face_data.get_blendshape(FaceBlendShape.MouthLowerDownLeft))
-            blends.append(face_data.get_blendshape(FaceBlendShape.MouthPressLeft))
-            blends.append(face_data.get_blendshape(FaceBlendShape.MouthPressRight))
-            blends.append(face_data.get_blendshape(FaceBlendShape.MouthClose))
-            blends.append(face_data.get_blendshape(FaceBlendShape.MouthPucker))
-            blends.append(face_data.get_blendshape(FaceBlendShape.MouthShrugUpper))
-            blends.append(face_data.get_blendshape(FaceBlendShape.JawOpen))
-            blends.append(face_data.get_blendshape(FaceBlendShape.JawLeft))
-            blends.append(face_data.get_blendshape(FaceBlendShape.JawRight))
-            blends.append(face_data.get_blendshape(FaceBlendShape.BrowDownLeft))
-            blends.append(face_data.get_blendshape(FaceBlendShape.BrowOuterUpLeft))
-            blends.append(face_data.get_blendshape(FaceBlendShape.BrowDownRight))
-            blends.append(face_data.get_blendshape(FaceBlendShape.BrowOuterUpRight))
-            blends.append(face_data.get_blendshape(FaceBlendShape.CheekSquintRight))
-            blends.append(face_data.get_blendshape(FaceBlendShape.CheekSquintLeft))
-
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.8,
+            model_complexity=2) as holistic:
+        while cap.isOpened():
+            success, image = cap.read()
+            # current_frame
             frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
-            currentTime = cap.get(cv2.CAP_PROP_POS_MSEC)
-            json_data = {
-                "blendShapes": blends,
-                "frame": frame,
-                "time": currentTime
-            }
+            if not success:
+              break
 
-            yield json_data
-
-        if debug:
-            # Draw landmark annotation on the image.
+            # To improve performance, optionally mark the image as not writeable to
+            # pass by reference.
             image.flags.writeable = True
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-            mp_drawing.draw_landmarks(
-                image,
-                results.face_landmarks,
-                mp_holistic.FACEMESH_CONTOURS,
-                landmark_drawing_spec=None,
-                connection_drawing_spec=mp_drawing_styles
-                .get_default_face_mesh_contours_style())
-            mp_drawing.draw_landmarks(
-                image,
-                results.pose_landmarks,
-                mp_holistic.POSE_CONNECTIONS,
-                landmark_drawing_spec=mp_drawing_styles
-                .get_default_pose_landmarks_style())
-            if results.right_hand_landmarks:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            results = holistic.process(image)
+
+            if results.face_landmarks:
+                face_landmarks = results.face_landmarks
+                landmarks = np.array(
+                    [(lm.x, lm.y, lm.z) for lm in face_landmarks.landmark[:468]]
+
+                )
+                landmarks = landmarks.T
+
+                metric_landmarks, pose_transform_mat = get_metric_landmarks(
+                    landmarks.copy(), pcf
+                )
+                            # calculate and set all the blendshapes
+                blendshape_calulator.calculate_blendshapes(
+                    face_data, metric_landmarks[:3].T, face_landmarks.landmark
+                )
+                            # blends = live_link_face.get_all_blendshapes()
+
+                blends = [face_data.get_blendshape(FaceBlendShape.EyeBlinkLeft)]
+                blends.append(face_data.get_blendshape(FaceBlendShape.EyeBlinkRight))
+                blends.append(face_data.get_blendshape(FaceBlendShape.MouthSmileRight))
+                blends.append(face_data.get_blendshape(FaceBlendShape.MouthSmileLeft))
+                blends.append(face_data.get_blendshape(FaceBlendShape.MouthFrownRight))
+                blends.append(face_data.get_blendshape(FaceBlendShape.MouthFrownLeft))
+                blends.append(face_data.get_blendshape(FaceBlendShape.MouthLeft))
+                blends.append(face_data.get_blendshape(FaceBlendShape.MouthRight))
+                blends.append(face_data.get_blendshape(FaceBlendShape.MouthLowerDownRight))
+                blends.append(face_data.get_blendshape(FaceBlendShape.MouthLowerDownLeft))
+                blends.append(face_data.get_blendshape(FaceBlendShape.MouthPressLeft))
+                blends.append(face_data.get_blendshape(FaceBlendShape.MouthPressRight))
+                blends.append(face_data.get_blendshape(FaceBlendShape.MouthClose))
+                blends.append(face_data.get_blendshape(FaceBlendShape.MouthPucker))
+                blends.append(face_data.get_blendshape(FaceBlendShape.MouthShrugUpper))
+                blends.append(face_data.get_blendshape(FaceBlendShape.JawOpen))
+                blends.append(face_data.get_blendshape(FaceBlendShape.JawLeft))
+                blends.append(face_data.get_blendshape(FaceBlendShape.JawRight))
+                blends.append(face_data.get_blendshape(FaceBlendShape.BrowDownLeft))
+                blends.append(face_data.get_blendshape(FaceBlendShape.BrowOuterUpLeft))
+                blends.append(face_data.get_blendshape(FaceBlendShape.BrowDownRight))
+                blends.append(face_data.get_blendshape(FaceBlendShape.BrowOuterUpRight))
+                blends.append(face_data.get_blendshape(FaceBlendShape.CheekSquintRight))
+                blends.append(face_data.get_blendshape(FaceBlendShape.CheekSquintLeft))
+
+                frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
+                currentTime = cap.get(cv2.CAP_PROP_POS_MSEC)
+                yield {
+                    "blendShapes": blends,
+                    "frame": frame,
+                    "time": currentTime,
+                }
+            if debug:
+                # Draw landmark annotation on the image.
+                image.flags.writeable = True
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
                 mp_drawing.draw_landmarks(
                     image,
-                    results.right_hand_landmarks,
-                    mp_hands.HAND_CONNECTIONS,
-                    mp_drawing_styles.get_default_hand_landmarks_style(),
-                    mp_drawing_styles.get_default_hand_connections_style())
+                    results.face_landmarks,
+                    mp_holistic.FACEMESH_CONTOURS,
+                    landmark_drawing_spec=None,
+                    connection_drawing_spec=mp_drawing_styles
+                    .get_default_face_mesh_contours_style())
+                mp_drawing.draw_landmarks(
+                    image,
+                    results.pose_landmarks,
+                    mp_holistic.POSE_CONNECTIONS,
+                    landmark_drawing_spec=mp_drawing_styles
+                    .get_default_pose_landmarks_style())
+                if results.right_hand_landmarks:
+                    mp_drawing.draw_landmarks(
+                        image,
+                        results.right_hand_landmarks,
+                        mp_hands.HAND_CONNECTIONS,
+                        mp_drawing_styles.get_default_hand_landmarks_style(),
+                        mp_drawing_styles.get_default_hand_connections_style())
 
-            # Flip the image horizontally for a selfie-view display.
-            cv2.imshow('MediaPipe Holistic', cv2.flip(image, 1))
-            result.write(image)
-            if cv2.waitKey(5) & 0xFF == 27:
-              break
+                # Flip the image horizontally for a selfie-view display.
+                cv2.imshow('MediaPipe Holistic', cv2.flip(image, 1))
+                result.write(image)
+                if cv2.waitKey(5) & 0xFF == 27:
+                  break
     cap.release()
 
 
 if __name__ == '__main__':
     print("dd")
     path = "D:\\pose\\New\\final\\1.mp4"
-    for i in Calculate_Face_Mocap(path,True):
+    for _ in Calculate_Face_Mocap(path,True):
         continue

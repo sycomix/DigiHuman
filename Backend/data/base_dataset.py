@@ -90,9 +90,7 @@ def __make_power_2(img, base, method=Image.BICUBIC):
     ow, oh = img.size
     h = int(round(oh / base) * base)
     w = int(round(ow / base) * base)
-    if (h == oh) and (w == ow):
-        return img
-    return img.resize((w, h), method)
+    return img if (h == oh) and (w == ow) else img.resize((w, h), method)
 
 
 def __scale_width(img, target_width, method=Image.BICUBIC):
@@ -123,6 +121,4 @@ def __crop(img, pos, size):
 
 
 def __flip(img, flip):
-    if flip:
-        return img.transpose(Image.FLIP_LEFT_RIGHT)
-    return img
+    return img.transpose(Image.FLIP_LEFT_RIGHT) if flip else img

@@ -15,15 +15,7 @@ import torch
 class TorchTestCase(unittest.TestCase):
     def assertTensorClose(self, x, y):
         adiff = float((x - y).abs().max())
-        if (y == 0).all():
-            rdiff = 'NaN'
-        else:
-            rdiff = float((adiff / y).abs().max())
-
-        message = (
-            'Tensor close check failed\n'
-            'adiff={}\n'
-            'rdiff={}\n'
-        ).format(adiff, rdiff)
+        rdiff = 'NaN' if (y == 0).all() else float((adiff / y).abs().max())
+        message = f'Tensor close check failed\nadiff={adiff}\nrdiff={rdiff}\n'
         self.assertTrue(torch.allclose(x, y), message)
 

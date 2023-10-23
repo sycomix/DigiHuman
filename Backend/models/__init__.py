@@ -11,7 +11,7 @@ def find_model_using_name(model_name):
     # Given the option --model [modelname],
     # the file "models/modelname_model.py"
     # will be imported.
-    model_filename = "models." + model_name + "_model"
+    model_filename = f"models.{model_name}_model"
     modellib = importlib.import_module(model_filename)
 
     # In the file, the class called ModelNameModel() will
@@ -25,7 +25,9 @@ def find_model_using_name(model_name):
             model = cls
 
     if model is None:
-        print("In %s.py, there should be a subclass of torch.nn.Module with class name that matches %s in lowercase." % (model_filename, target_model_name))
+        print(
+            f"In {model_filename}.py, there should be a subclass of torch.nn.Module with class name that matches {target_model_name} in lowercase."
+        )
         exit(0)
 
     return model
@@ -39,6 +41,6 @@ def get_option_setter(model_name):
 def create_model(opt):
     model = find_model_using_name(opt.model)
     instance = model(opt)
-    print("model [%s] was created" % (type(instance).__name__))
+    print(f"model [{type(instance).__name__}] was created")
 
     return instance
